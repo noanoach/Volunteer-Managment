@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - Volunteer Manager{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Admin Panel</h1>
+    
+    <div class="row mb-4">
+        <div class="col">
+            <a href="{{ url_for('new_activity') }}" class="btn btn-primary">Create New Activity</a>
+        </div>
+    </div>
+
+    <!-- Calendar View -->
+    <h2 class="mb-3">Next 7 Days Calendar</h2>
+    <div class="calendar mb-5">
+        {% for date in range(7) %}
+            {% set current_date = today + timedelta(days=date) %}
+            {% set date_str = current_date.strftime('%Y-%m-%d') %}
+            <div class="calendar-day mb-4">
+                <h3 class="day-header">{{ current_date.strftime('%A, %B %d, %Y') }}</h3>
+                <div class="day-events">
+                    {% if date_str in activities_by_date %}
+                        {% for activity in activities_by_date[date_str] %}
+                            <div class="card mb-2">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h5 class="card-title">{{ activity.title }}</h5>
+                                            <p class="card-text">
+                                                <small class="text-muted">
+                                                    Time: {{ activity.start_time }} - {{ activity.end_time }}<br>
+                                                    Location: {{ activity.location }}
+                                                </small>
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-sm btn-danger delete-btn" 
+                                                    data-title="{{ activity.title }}"
+                                                    data-url="{{ url_for('delete_activity', activity_id=activity.id) }}">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <a href="{{ url_for('activity_details', activity_id=activity.id) }}" 
+                                           class="btn btn-sm btn-info">
+                                            View Registrations
+                                        </a>
+                                        <span class="badge bg-primary ms-2">
+                                            {{ activity.registrations|length }} Registrations
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info">
+                            No activities scheduled for this day
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- All Activities List -->
+    <h2 class="mb-3">All Upcoming Activities</h2>
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Location</th>
+                            <th>Registrations</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for activity in all_activities %}
+                        <tr>
+                            <td>{{ activity.title }}</td>
+                            <td>{{ activity.date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ activity.start_time }} - {{ activity.end_time }}</td>
+                            <td>{{ activity.location }}</td>
+                            <td>
+                                <span class="badge bg-primary">
+                                    {{ activity.registrations|length }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('activity_details', activity_id=activity.id) }}" 
+                                   class="btn btn-sm btn-info">View</a>
+                                <button class="btn btn-sm btn-danger delete-btn"
+                                        data-title="{{ activity.title }}"
+                                        data-url="{{ url_for('delete_activity', activity_id=activity.id) }}">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">No upcoming activities found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete "<span id="activityTitle"></span>"?
+                This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .calendar-day {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 1rem;
+    }
+    .day-header {
+        color: #0d6efd;
+        border-bottom: 2px solid #0d6efd;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .day-events {
+        min-height: 100px;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('.delete-btn');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const title = this.dataset.title;
+            const deleteUrl = this.dataset.url;
+            document.getElementById('activityTitle').textContent = title;
+            document.getElementById('confirmDeleteBtn').href = deleteUrl;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        });
+    });
+});
+</script>
+{% endblock %} 

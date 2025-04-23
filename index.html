@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Available Activities - Volunteer Manager{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Available Activities</h1>
+<div class="row">
+    {% for activity in activities %}
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ activity.title }}</h5>
+                <p class="card-text">{{ activity.description }}</p>
+                <p class="card-text">
+                    <small class="text-muted">
+                        <strong>Date:</strong> {{ activity.date.strftime('%B %d, %Y') }}<br>
+                        <strong>Time:</strong> {{ activity.start_time }} - {{ activity.end_time }}<br>
+                        <strong>Location:</strong> {{ activity.location }}<br>
+                        {% if activity.max_volunteers %}
+                        <strong>Maximum volunteers:</strong> {{ activity.max_volunteers }}
+                        {% endif %}
+                    </small>
+                </p>
+                {% if current_user.is_authenticated %}
+                    {% set status = get_registration_status(current_user.id, activity.id) %}
+                    {% if status == 'pending' %}
+                        <span class="badge bg-warning">Registration Pending</span>
+                    {% elif status == 'approved' %}
+                        <span class="badge bg-success">Registration Approved</span>
+                    {% elif status == 'rejected' %}
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-danger me-2">Registration Rejected</span>
+                            <a href="{{ url_for('register', activity_id=activity.id) }}" class="btn btn-primary">Register Again</a>
+                        </div>
+                    {% else %}
+                        <a href="{{ url_for('register', activity_id=activity.id) }}" class="btn btn-primary">Register</a>
+                    {% endif %}
+                {% else %}
+                    <a href="{{ url_for('register', activity_id=activity.id) }}" class="btn btn-primary">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            No activities available at the moment. Please check back later.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %} 
